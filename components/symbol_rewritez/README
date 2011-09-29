@@ -1,3 +1,4 @@
+
 Export statements needed to run code:
 
 	export LD_LIBRARY_PATH=/home/sholsapp/Repositories/DSM64/trunk/binwrite/i386-unknown-linux2.4/lib
