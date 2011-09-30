@@ -17,9 +17,23 @@
 //#include <dyntypes.h>
 
 using namespace std;
+
 using namespace Dyninst;
 using namespace SymtabAPI;
 using namespace InstructionAPI;
+
+typedef vector<Variable*> VarList;
+//typedef vector<localVar*> LocalVarList;
+//typedef vector<Function*> FuncList;
+typedef vector<Region*> RegionList;
+typedef vector<string> StrList;
+
+// Comparator used to sort vectors by memory offsets
+struct byOffset {
+   bool operator()(Variable* const &a, Variable* const &b) {
+      return a->getOffset() < b->getOffset();
+   }
+};
 
 class InstructionRewriter {
    private:
@@ -32,6 +46,24 @@ class InstructionRewriter {
    public:
       InstructionRewriter(string binary_name);
 };
+
+void InstructionRewriter::describeRegion(Region* reg) {
+  /**
+   *
+   */
+   if (reg != NULL) {
+      fprintf(stderr, "%s:\n", reg->getRegionName().c_str());
+      fprintf(stderr, "\tgetRegionAddr(): %p\n", (void*) reg->getRegionAddr());
+      fprintf(stderr, "\tgetRegionSize(): %ld\n", reg->getRegionSize());
+      fprintf(stderr, "\tgetDiskOffset(): %p\n", (void*) reg->getDiskOffset());
+      fprintf(stderr, "\tgetDiskSize(): %ld\n", reg->getDiskSize());
+      fprintf(stderr, "\tgetPtrToRawData(): %p\n", (void*) reg->getPtrToRawData());
+      fprintf(stderr, "\n");
+   }
+   else {
+      fprintf(stderr, "Region is NULL\n");
+   }
+}
 
 InstructionRewriter::InstructionRewriter(string binary_name) {
 
@@ -62,18 +94,10 @@ InstructionRewriter::InstructionRewriter(string binary_name) {
    assert(data_region != NULL);
    assert(text_region != NULL);
 
-   // Describe what we're looking at
    fprintf(stdout, "Data region:\n");
-   fprintf(stdout, "\tgetRegionName: %s\n", data_region->getRegionName().c_str());
-   fprintf(stdout, "\tgetRegionAddr: %p\n", data_region->getRegionAddr());
-   fprintf(stdout, "\tgetRegionSize: %ld\n", data_region->getRegionSize());
-   fprintf(stdout, "\n");
-
+   describeRegion(data_region);
    fprintf(stdout, "Text region:\n");
-   fprintf(stdout, "\tgetRegionName: %s\n", text_region->getRegionName().c_str());
-   fprintf(stdout, "\tgetRegionAddr: %p\n", text_region->getRegionAddr());
-   fprintf(stdout, "\tgetRegionSize: %ld\n", text_region->getRegionSize());
-   fprintf(stdout, "\n");
+   describeRegion(text_region);
 
    void* raw_text = text_region->getPtrToRawData();
    long unsigned int raw_text_size = text_region->getRegionSize();
