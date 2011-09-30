@@ -3,66 +3,13 @@
  */
 #include <cstdio>
 #include <string>
-#include <iostream>
 #include <algorithm>
 #include <vector>
-#include <cassert>
 
-#include <Symbol.h>
-#include <Module.h>
-#include <Variable.h>
-#include <InstructionDecoder.h>
-#include <Immediate.h>
-//#include <Function.h>
-//#include <Aggregate.h>
-//#include <dyntypes.h>
+//#include <iostream>
+//#include <cassert>
 
-using namespace std;
-
-using namespace Dyninst;
-using namespace SymtabAPI;
-using namespace InstructionAPI;
-
-
-struct DataRegionEntryInfo {
-   string prettyName;
-   unsigned int size;
-   unsigned int value;
-};
-
-
-typedef vector<Variable*> VarList;
-//typedef vector<localVar*> LocalVarList;
-//typedef vector<Function*> FuncList;
-typedef vector<Region*> RegionList;
-typedef vector<string> StrList;
-
-// Comparator used to sort vectors by memory offsets
-struct byOffset {
-   bool operator()(Variable* const &a, Variable* const &b) {
-      return a->getOffset() < b->getOffset();
-   }
-};
-
-class InstructionRewriter {
-   private:
-      // The main symtab object
-      Symtab* symtab_obj;
-      Module* module;
-      Region* data_region;
-      Region* text_region;
-      string binary_name;
-
-   private:
-      VarList collectGlobalVariables(Region* reg);
-      map<unsigned int, struct DataRegionEntryInfo> describeData();
-
-   public:
-      InstructionRewriter(string binary_name);
-
-      void describeRegion(Region* reg);
-};
-
+#include "rewriter.h"
 
 InstructionRewriter::InstructionRewriter(string binary_name) {
    /**
@@ -103,8 +50,8 @@ InstructionRewriter::InstructionRewriter(string binary_name) {
    void* raw_text = text_region->getPtrToRawData();
    long unsigned int raw_text_size = text_region->getRegionSize();
 
-   void* new_raw_text = malloc(text_region->getRegionSize());
-   memcpy(new_raw_text, raw_text, text_region->getRegionSize());
+   void* dotTextRawMuta = malloc(text_region->getRegionSize());
+   memcpy(dotTextRawMuta, raw_text, text_region->getRegionSize());
 
    InstructionDecoder decoder(raw_text, raw_text_size, Arch_x86_64);
    Instruction::Ptr i = decoder.decode();
@@ -122,23 +69,20 @@ InstructionRewriter::InstructionRewriter(string binary_name) {
       //}
       //fprintf(stdout, "%i bytes > %s\n", i->size(), i->format().c_str());
 
-      unsigned char* raw_instr = (unsigned char*) i->ptr();
+      unsigned char* dotTextRaw = (unsigned char*) i->ptr();
 
-      if (raw_instr[0] == 0xa1 && i->size() == 9) {
+      if (dotTextRaw[0] == 0xa1 && i->size() == 9) {
          fprintf(stdout, "%i bytes > %s\n", i->size(), i->format().c_str());
-         unsigned int* dataOperand = (unsigned int*)(raw_instr + 1);
+         unsigned int* dataOperand = (unsigned int*)(dotTextRaw + 1);
          if (dataOperand[0] > 134518284) {
-            unsigned char* tmp = (unsigned char*) new_raw_text;
-            unsigned int* tmp2 = (unsigned int*) (tmp + currentTextOffset + 1);
-
-            tmp2[0] = 134518520;
-
+            //((unsigned int*)(((unsigned char*) __dot_text_muta) + underflow + 1))[0] = 134518520;
+            ((unsigned int*)(((unsigned char*) dotTextRawMuta) + currentTextOffset + 1))[0] = 134518520;
          }
       }
 
       //fprintf(stderr, "<");
       //for (int byte_index = 0; byte_index < i->size(); byte_index++) {
-      //  fprintf(stderr, " %x ", raw_instr[byte_index]);
+      //  fprintf(stderr, " %x ", dotTextRaw[byte_index]);
       //}
       //fprintf(stderr, ">\n");
 
@@ -147,7 +91,7 @@ InstructionRewriter::InstructionRewriter(string binary_name) {
    }
 
    // Assign the data region to point at the new buffer
-   if (!text_region->setPtrToRawData((void*) new_raw_text, text_region->getRegionSize())) {
+   if (!text_region->setPtrToRawData((void*) dotTextRawMuta, text_region->getRegionSize())) {
       fprintf(stderr, "Failed to set pointer to raw text!\n");
       exit(EXIT_FAILURE);
    }
@@ -155,8 +99,7 @@ InstructionRewriter::InstructionRewriter(string binary_name) {
    // Emit the binary
    if (symtab_obj->emit(binary_name + "-mutated")) {
       fprintf(stderr, "Emit success\n");
-   }
-   else {
+   } else {
       fprintf(stderr, "Emit failure\n");
    }
 
