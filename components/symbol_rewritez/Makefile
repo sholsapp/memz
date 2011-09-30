@@ -6,8 +6,9 @@ LDFLAGS=
 PLATFORM=i386-unknown-linux2.4
 DYNINST_ROOT=..
 INCLUDES=-ldyninstAPI -lsymtabAPI -linstructionAPI -lparseAPI -lcommon -liberty -ldwarf -lelf
-HEADERS=../include
-DYNINST=../i386-unknown-linux2.4/lib
+HEADERS=../../include/rewritez/
+DYNINST=../../lib/rewritez/i386-unknown-linux2.4/lib/
+
 
 ALL=Main test
  
