@@ -8,6 +8,7 @@
 
 #include "DataRewriter.h"
 #include "TextRewriter.h"
+#include "SymtabRewriter.h"
 
 using namespace std;
 

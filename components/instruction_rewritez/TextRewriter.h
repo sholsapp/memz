@@ -10,6 +10,7 @@ class TextRewriter {
   public:
      Symtab* symTab;
      Region* dataRegion;
+     Region* bssRegion;
      Region* textRegion;
 
      AddrMapping* relocs;

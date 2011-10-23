@@ -18,6 +18,12 @@ TextRewriter::TextRewriter(Symtab* _symTab, AddrMapping* relocations) {
       exit(EXIT_FAILURE);
    }
 
+   if (!symTab->findRegion(bssRegion, ".bss")) {
+      fprintf(stderr, "> Couldn't find .bss region!\n");
+      exit(EXIT_FAILURE);
+   }
+
+
    organizeNewText();
 
    return;
@@ -36,7 +42,8 @@ void TextRewriter::organizeNewText() {
    newText = (unsigned char*) calloc (1, sizeof(unsigned char) * textSize);
    memcpy(newText, oldText, textSize);
 
-   InstructionDecoder decoder(oldText, textSize, Arch_x86_64);
+   //InstructionDecoder decoder(oldText, textSize, Arch_x86_64);
+   InstructionDecoder decoder(oldText, textSize, Arch_x86);
    Instruction::Ptr i = decoder.decode();
 
    long unsigned int currentTextOffset = 0;
@@ -50,38 +57,35 @@ void TextRewriter::organizeNewText() {
       //  Immediate::makeImmediate(Result(u64, 2^32));
       //  fprintf(stderr, "results: %s\n", res.format().c_str());
       //}
-      //fprintf(stdout, "%i bytes > %s\n", i->size(), i->format().c_str());
 
       unsigned char* dotTextRaw = (unsigned char*) i->ptr();
 
-      if (i->readsMemory()) {
-         // MOV instruction loading a 32 bit val
-         if (dotTextRaw[0] == 0xa1 && i->size() == 9) {
+      //fprintf(stderr, "%i bytes > %s -- ", i->size(), i->format().c_str());
+      //for (int x = 0; x < i->size(); x++) {
+      //   fprintf(stderr, " %x ", dotTextRaw[x]);
+      //}
+      //fprintf(stderr, "\n");
 
-            unsigned int* dataOperand = (unsigned int*)(dotTextRaw + 1);
+      if (i->readsMemory()) {
+
+         if (/*dotTextRaw[0] == 0xa1 && */i->size() == 5 || i->size() == 6) {
+            unsigned int* dataOperand = i->size() == 5 ? (unsigned int*)(dotTextRaw + 1)
+               : (unsigned int*)(dotTextRaw + 2);
+
+            // Interpret as int to reverse bytes in memory automatically
+            fprintf(stderr, "Data operand: %p\n", (void*) ((unsigned int)*dataOperand));
+
 
             unsigned int data = *dataOperand;
 
-            //fprintf(stderr, "Looking for %p, found %p\n", (void*)data, (void*) (*relocs)[data]);
-            if (dataRegion->isOffsetInRegion((*relocs)[data])) {
-               *((unsigned int*)(newText + currentTextOffset + 1)) = (*relocs)[data];
+            unsigned char* tmp = (unsigned char*) dataOperand;
 
-               //fprintf(stderr, "Rewrote .text:\n");
-               //fprintf(stderr, "%d byte : < %s >\n",
-               //      i->size(),
-               //      i->format().c_str());
-               //fprintf(stderr, "New data address at : %d\n", (*relocs)[data]);
+            if (dataRegion->isOffsetInRegion((*relocs)[data])
+                  || bssRegion->isOffsetInRegion((*relocs)[data])) {
+               // Hacky, depends on teh 32-bit instructions
+               int tmp = i->size() == 5 ? 1 : 2;
+               *((unsigned int*)(newText + currentTextOffset + tmp)) = (*relocs)[data];
             }
-            else {
-               fprintf(stderr, "NO on %p\n", (void*) data);
-            }
-
-            //vector<Operand> operands;
-            //i->getOperands(operands);
-            //fprintf(stderr, "%d byte : < %s > operands: %d\n",
-            //      i->size(),
-            //      i->format().c_str(),
-            //      operands.size());
          }
       }
 
@@ -102,6 +106,4 @@ void TextRewriter::organizeNewText() {
       fprintf(stderr, "Failed to set pointer to raw text!\n");
       exit(EXIT_FAILURE);
    }
-
-
 }

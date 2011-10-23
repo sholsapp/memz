@@ -30,9 +30,16 @@ class DataRewriter {
       unsigned char* oldRaw;
       unsigned char* newRaw;
 
+      unsigned char* oldRawBss;
+      unsigned char* newRawBss;
+
+      unsigned int newDataBase;
+      unsigned int newDataSize;
+
    public:
       DataRewriter(Symtab*);
       VarList filterVariables(Region*);
-      void organizeNewData();
+      void organizeNewData(Region*, unsigned char);
+      void organizeNewBss(Region*, unsigned char);
 
 };

@@ -1,5 +1,15 @@
 #include "BinaryRewriter.h"
 
+#include <algorithm>
+#include <vector>
+
+// Comparator used to sort vectors by memory offsets
+//struct byOffset {
+//   bool operator()(Symbol* const &a, Symbol* const &b) {
+//      return a->getOffset() < b->getOffset();
+//   }
+//} byPosition;
+
 BinaryRewriter::BinaryRewriter(std::string whichBinary) {
    /**
     *
@@ -17,13 +27,15 @@ BinaryRewriter::BinaryRewriter(std::string whichBinary) {
       exit(EXIT_FAILURE);
    }
 
+
    DataRewriter dataRewriter(symTab);
 
    describeRegion(dataRewriter.dataRegion);
-
    describeRegion(dataRewriter.bssRegion);
 
    TextRewriter textRewriter(symTab, &dataRewriter.newLocs);
+
+   SymtabRewriter symtabRewriter(symTab, &dataRewriter.newLocs);
 
    // Emit the binary
    if (symTab->emit(binaryName + "-mutated")) {
@@ -31,8 +43,6 @@ BinaryRewriter::BinaryRewriter(std::string whichBinary) {
    } else {
       fprintf(stderr, "Emit failure\n");
    }
-
-
 }
 
 

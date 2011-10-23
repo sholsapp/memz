@@ -1,6 +1,3 @@
-#ifndef _BINARYREWRITER_H_
-#define _BINARYREWRITER_H_
-
 #include <Symbol.h>
 #include <Module.h>
 #include <Variable.h>
@@ -25,8 +22,6 @@ struct DataRegionEntryInfo {
 
 
 typedef vector<Variable*> VarList;
-//typedef vector<localVar*> LocalVarList;
-//typedef vector<Function*> FuncList;
 typedef vector<Region*> RegionList;
 typedef vector<string> StrList;
 
@@ -37,6 +32,9 @@ struct byOffset {
    }
 };
 
+
+
+
 class InstructionRewriter {
    private:
       // The main symtab object
@@ -45,6 +43,9 @@ class InstructionRewriter {
       Region* data_region;
       Region* text_region;
       string binary_name;
+
+      unsigned char* old_data;
+      unsigned char* new_data;
 
    private:
       VarList collectGlobalVariables(Region* reg);
@@ -55,5 +56,3 @@ class InstructionRewriter {
 
       void describeRegion(Region* reg);
 };
-
-#endif

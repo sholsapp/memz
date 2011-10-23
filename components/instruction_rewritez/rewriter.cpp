@@ -103,8 +103,6 @@ InstructionRewriter::InstructionRewriter(string binary_name) {
       fprintf(stderr, "Emit failure\n");
    }
 
-
-
    return;
 }
 
@@ -202,14 +200,4 @@ VarList InstructionRewriter::collectGlobalVariables(Region* reg) {
 }
 
 
-int main(int argc, char** argv) {
-   /**
-    *
-    */
-   if (argc < 2) {
-      fprintf(stdout, "Usage: ./program <binary to rewrite>\n");
-      exit(EXIT_SUCCESS);
-   }
-   InstructionRewriter instr_rw(argv[1]);
-   return 0;
-}
+

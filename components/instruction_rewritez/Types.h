@@ -10,4 +10,8 @@
 #include <Immediate.h>
 
 typedef std::vector<Dyninst::SymtabAPI::Variable*> VarList;
+typedef std::vector<Dyninst::SymtabAPI::Symbol*> SymList;
+
 typedef std::map<unsigned int, unsigned int> AddrMapping;
+
+
